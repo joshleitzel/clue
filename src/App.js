@@ -61,7 +61,9 @@ class Game extends React.Component {
       4: 'does_not_have'
     };
 
-    this.state = {
+    var savedState = localStorage.getItem('state');
+
+    this.initialState = {
       history: [
         {
           squares: Array(9).fill(null)
@@ -72,10 +74,12 @@ class Game extends React.Component {
       categories: [
       ]
     };
+
+    this.state = savedState ? JSON.parse(savedState) : {};
   }
 
   addCategory(category) {
-    this.setState((prevState) => {
+    this.updateState((prevState) => {
       category.items = category.items.map((item) => {
         return { id: this.itemCount++, name: item };
       });
@@ -92,8 +96,14 @@ class Game extends React.Component {
     });
   }
 
+  updateState(updater) {
+    this.setState(updater, () => {
+      localStorage.setItem('state', JSON.stringify(this.state));
+    });
+  }
+
   addPlayer(name) {
-    this.setState((prevState) => {
+    this.updateState((prevState) => {
       const id = prevState.players.length;
       const emptyItems = {};
       prevState.categories.forEach((category) => {
@@ -109,7 +119,8 @@ class Game extends React.Component {
     });
   }
 
-  componentDidMount() {
+  initState() {
+    this.setState(this.initialState);
     this.addCategory({ id: 'chars', title: 'Characters', items: ['Green', 'Mustard', 'Peacock', 'Plum', 'Scarlet', 'White'] });
     this.addCategory({ id: 'weapons', title: 'Weapons', items: ['Wrench', 'Candlestick', 'Dagger', 'Pistol', 'Lead Pipe', 'Rope'] });
     this.addCategory({ id: 'locations', title: 'Locations', items: ['Bathroom', 'Office', 'Dining Room', 'Game Room', 'Garage', 'Bedroom', 'Living Room', 'Kitchen', 'Courtyard'] });
@@ -117,6 +128,14 @@ class Game extends React.Component {
     this.addPlayer('Me')
     this.addPlayer('Mary')
     this.addPlayer('Mom')
+  }
+
+  componentDidMount() {
+    if (this.state.categories.length) {
+      return;
+    }
+
+    this.initState();
   }
 
   handleClick(item, player) {
@@ -139,7 +158,7 @@ class Game extends React.Component {
       overallState = 0;
     }
 
-    this.setState((prevState) => {
+    this.updateState((prevState) => {
       return update(prevState, {
         itemStates: {
           [player.id]: { [item.id]: { $set: newState } },
@@ -153,26 +172,33 @@ class Game extends React.Component {
         return;
       }
 
-      var setState;
+      var updateState;
       if (newState === 1 || newState === 2) {
-        setState = -1;
+        updateState = -1;
       } else {
-        setState = 0;
+        updateState = 0;
       }
 
-      this.setState((prevState) => {
+      this.updateState((prevState) => {
         return update(prevState, {
           itemStates: {
-            [otherPlayer.id]: { [item.id]: { $set: setState } }
+            [otherPlayer.id]: { [item.id]: { $set: updateState } }
           }
         });
       });
     });
   }
 
+  reset() {
+    this.initState();
+  }
+
   render() {
     return (
-      <Table players={this.state.players} categories={this.state.categories} stateMap={this.stateMap} itemStates={this.state.itemStates} onClick={(item, player) => this.handleClick(item, player)} />
+      <div className="game">
+        <Table players={this.state.players} categories={this.state.categories} stateMap={this.stateMap} itemStates={this.state.itemStates} onClick={(item, player) => this.handleClick(item, player)} />
+        <button onClick={() => this.reset()}>Reset</button>
+      </div>
     )
   }
 }
