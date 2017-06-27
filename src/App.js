@@ -5,8 +5,8 @@ import './App.css';
 class Square extends Component {
   render() {
     return (
-      <button className={`square ${this.props.stateLabel}`} disabled={this.props.itemState === -1} onClick={() => this.props.onClick(this.props.item, this.props.player)} >
-        {this.props.itemState}
+      <button data-state={this.props.stateLabel} disabled={this.props.itemState === -1} onClick={() => this.props.onClick(this.props.item, this.props.player)} >
+        <span></span>
       </button>
     );
   }
